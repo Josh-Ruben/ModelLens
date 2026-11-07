@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ModelLens results</title>
+    <style>
+        body {
+            margin: 0; font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #020817 0%, #111827 100%);
+            color: #e2e8f0;
+        }
+        .wrap { max-width: 1200px; margin: 0 auto; padding: 32px 20px 80px; }
+        .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+        .brand { font-size: 2rem; font-weight: 700; }
+        .brand span { color: #8b5cf6; }
+        .prompt-box {
+            background: rgba(15,23,42,0.8); border: 1px solid rgba(148,163,184,0.14); border-radius: 16px; padding: 18px 20px; margin-bottom: 24px;
+        }
+        .grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px;
+        }
+        .card {
+            background: rgba(15,23,42,0.8); border: 1px solid rgba(148,163,184,0.14); border-radius: 16px; padding: 16px; overflow: hidden;
+        }
+        .card img { width: 100%; height: auto; border-radius: 12px; background: #0f172a; }
+        .meta { margin-top: 10px; font-size: 0.95rem; color: #cbd5e1; }
+        .btn {
+            display: inline-block; margin-top: 12px; background: linear-gradient(135deg, #8b5cf6, #14b8a6); color: white; border-radius: 10px; padding: 11px 16px; text-decoration: none; font-weight: 700;
+        }
+    </style>
+</head>
+<body>
+    <div class="wrap">
+        <div class="topbar">
+            <div class="brand">Model<span>Lens</span></div>
+            <a href="/" class="btn">New comparison</a>
+        </div>
+
+        <div class="prompt-box">
+            <h2>Prompt</h2>
+            <p>{{ record.prompt }}</p>
+            <p><strong>Selected models:</strong> {{ record.selected_models|join:", " }}</p>
+        </div>
+
+        <div class="grid">
+            {% for image in images %}
+            <div class="card">
+                <img src="{{ image.image_url }}" alt="{{ image.model_name }} result" />
+                <div class="meta">
+                    <strong>{{ image.model_name }}</strong>
+                </div>
+            </div>
+            {% empty %}
+            <p>No images generated yet.</p>
+            {% endfor %}
+        </div>
+    </div>
+</body>
+</html>
