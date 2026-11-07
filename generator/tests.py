@@ -45,7 +45,7 @@ class GenerationApiTests(TestCase):
         )
         self.assertEqual(response.status_code, 201)
         body = response.json()
-        self.assertEqual(body["status"], "processing")
+        self.assertEqual(body["status"], "queued")
         self.assertEqual(len(body["models"]), 2)
         self.assertTrue(GenerationRequest.objects.filter(public_id=body["id"]).exists())
 
