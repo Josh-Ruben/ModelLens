@@ -8,8 +8,42 @@ from django.conf import settings
 from .models import GenerationRequest, ModelGeneration
 from .providers import MODEL_CATALOG, ProviderError, ReplicateProvider
 
-
 TERMINAL_STATES = {"succeeded", "failed", "canceled"}
+
+
+def generate_model_images(prompt: str, selected_models: list[str], image_count: int = 3) -> list[dict[str, str]]:
+    """Compatibility helper for the legacy form-based generation flow.
+
+    This keeps the older Django views working while still using the same
+    allowlisted Replicate provider logic used elsewhere in the app.
+    """
+    provider = ReplicateProvider()
+    generated: list[dict[str, str]] = []
+
+    for model_key in selected_models:
+        model_entry = MODEL_CATALOG.get(model_key, {})
+        if not model_entry:
+            continue
+        try:
+            prediction = provider.create_prediction(model_key, prompt)
+        except ProviderError:
+            continue
+
+        output_urls = prediction.get("output_urls") or []
+        if not output_urls:
+            continue
+
+        url = output_urls[0]
+        generated.append({
+            "model_name": model_entry.get("name", model_key),
+            "image_path": url,
+            "image_url": url,
+        })
+
+        if len(generated) >= max(1, image_count):
+            break
+
+    return generated
 
 
 def start_generation(record: GenerationRequest) -> None:
@@ -46,7 +80,6 @@ def refresh_generation(record: GenerationRequest) -> None:
         try:
             prediction = provider.get_prediction(item.prediction_id)
         except ProviderError as exc:
-            # Keep polling on transient provider/network errors rather than losing a running job.
             item.error = str(exc)
         except Exception:
             item.error = "Generation status is temporarily unavailable; retrying."

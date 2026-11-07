@@ -1,6 +1,5 @@
-from django.http import JsonResponse
+from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import render
-from django.http import HttpRequest, HttpResponse
 
 from .forms import GenerationForm
 from .models import GeneratedImage, GenerationRequest
@@ -25,7 +24,7 @@ def generate(request: HttpRequest) -> HttpResponse:
         return render(request, "generator/home.html", {"form": form, "errors": form.errors})
 
     prompt = form.cleaned_data["prompt"]
-    selected_models = form.cleaned_data["selected_models"] or ["sdxl", "flux", "dalle"]
+    selected_models = form.cleaned_data["selected_models"] or ["sdxl-lightning", "flux-pro"]
     image_count = form.cleaned_data["image_count"]
 
     request_record = GenerationRequest.objects.create(
@@ -43,7 +42,8 @@ def generate(request: HttpRequest) -> HttpResponse:
             image_url=item["image_url"],
         )
 
-    return render(request, "generator/results.html", {"record": request_record, "images": request_record.images.all().order_by("model_name", "created_at")})
+    images = request_record.images.all().order_by("model_name", "created_at")
+    return render(request, "generator/results.html", {"record": request_record, "images": images})
 
 
 def results(request: HttpRequest, request_id: int) -> HttpResponse:
