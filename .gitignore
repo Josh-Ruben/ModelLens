@@ -1,20 +1,13 @@
-# Python
 __pycache__/
 *.py[cod]
 *.sqlite3
 .env
 .env.*
+!.env.example
 .venv/
 venv/
-.env.local
-
-# Django
 /media/
 /staticfiles/
-
-# VS Code
 .vscode/
-
-# OS
 .DS_Store
 Thumbs.db

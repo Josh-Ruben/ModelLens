@@ -1,14 +1,69 @@
-version: '3.9'
-
 services:
   web:
     build: .
-    container_name: modellens-web
-    command: python manage.py runserver 0.0.0.0:8000
-    volumes:
-      - .:/app
-    ports:
-      - "8000:8000"
+    restart: unless-stopped
+    env_file: .env
     environment:
-      - DJANGO_SETTINGS_MODULE=model_lens_project.settings
-      - PYTHONUNBUFFERED=1
+      DATABASE_URL: postgres://modellens:${POSTGRES_PASSWORD}@db:5432/modellens
+      REDIS_URL: redis://: ${REDIS_PASSWORD}@redis:6379/0
+      DJANGO_DEBUG: "0"
+    command: sh -c "python manage.py migrate --noinput && gunicorn model_lens_project.wsgi:application --bind 0.0.0.0:8000 --workers 3 --timeout 60"
+    ports:
+      - "${PORT:-8000}:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health/', timeout=3)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+  worker:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DATABASE_URL: postgres://modellens:${POSTGRES_PASSWORD}@db:5432/modellens
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
+      DJANGO_DEBUG: "0"
+    command: celery -A model_lens_project worker --loglevel=INFO --concurrency=2
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: modellens
+      POSTGRES_USER: modellens
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U modellens -d modellens"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes", "--requirepass", "${REDIS_PASSWORD:?Set REDIS_PASSWORD in .env}"]
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
+  redis_data:

@@ -3,3 +3,7 @@ Pillow==10.4.0
 python-dotenv==1.0.1
 gunicorn==23.0.0
 requests>=2.32,<3
+celery[redis]>=5.4,<6
+dj-database-url>=2.2,<3
+psycopg[binary]>=3.2,<4
+whitenoise>=6.8,<7

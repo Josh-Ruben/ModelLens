@@ -1,10 +1,10 @@
 from django.urls import path
 
-from .views import create_generation, generation_status, history, home
+from .views import generate, health, home, results
 
 urlpatterns = [
     path("", home, name="home"),
-    path("api/generations/", create_generation, name="create_generation"),
-    path("api/generations/<uuid:public_id>/", generation_status, name="generation_status"),
-    path("api/history/", history, name="generation_history"),
+    path("health/", health, name="health"),
+    path("generate/", generate, name="generate"),
+    path("results/<int:request_id>/", results, name="results"),
 ]
